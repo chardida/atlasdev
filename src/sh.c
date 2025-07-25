@@ -12,23 +12,50 @@ int sh_cd(char** args);
 int sh_help(char** args);
 int sh_exit(char** args);
 int sh_export(char** args);
+int sh_echo(char** args);
 
 char *builtin_str[] = {
     "cd",
     "help",
     "exit",
-    "export"
+    "export",
+    "echo"
 };
 
 int (*builtin_func[]) (char**) = {
     &sh_cd,
     &sh_help,
     &sh_exit,
-    &sh_export
+    &sh_export,
+    &sh_echo
 };
 
 int num_builtins(void) {
     return sizeof(builtin_str) / sizeof(char*);
+}
+
+int sh_echo(char** args) {
+    if (args[1] == NULL) {
+        fprintf(stderr, "sh: expected argument to \"echo\"\n");
+        return SH_ERROR;
+    }
+
+    if (args[1][0] == '$') {
+        char *env_var = getenv(args[1] + 1); // Skip the '$'
+        if (env_var) {
+            printf("%s\n", env_var);
+            return SH_SUCCESS;
+        } else {
+            fprintf(stderr, "sh: %s: not found\n", args[1]);
+            return SH_ERROR;
+        }
+    } else {
+        for (int i = 1; args[i] != NULL; i++) {
+            printf("%s ", args[i]);
+        }
+    }
+    printf("\n");
+    return SH_SUCCESS;
 }
 
 int sh_export(char **args) {
