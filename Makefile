@@ -6,8 +6,8 @@ BUILD_DIR   := build
 
 IMAGE       := atlas.img
 IMAGE_SIZE  := 64    # size in MB
-MOUNT_POINT := /mnt
-ROOTFS      := rootfs
+MOUNT_POINT := mnt
+ROOTFS      := $(BUILD_DIR)
 
 # Find all .c sources under src/, get relative paths
 SRCS      := $(shell find $(SRC_DIR) -type f -name '*.c')
@@ -16,7 +16,7 @@ BINS      := $(patsubst %.c,$(BUILD_DIR)/%,$(REL_PATHS))
 
 .PHONY: all img move run clean
 
-all: $(BINS)
+all: clean img
 
 # Compile each source into build/<relative path>, making dirs as needed
 $(BUILD_DIR)/%: $(SRC_DIR)/%.c
@@ -24,12 +24,13 @@ $(BUILD_DIR)/%: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 # Recreate the full disk image and install entire rootfs/
-img:
+img: $(BINS)
 	@echo "==> Rebuilding $(IMAGE) ($(IMAGE_SIZE)MB))"
 	@dd if=/dev/zero of=$(IMAGE) bs=1M count=$(IMAGE_SIZE) status=none
 	@mkfs.ext4 -F $(IMAGE)
 	@echo "==> Installing full rootfs into $(IMAGE)"
 	sudo mount -o loop $(IMAGE) $(MOUNT_POINT)
+	@mkdir -p $(MOUNT_POINT) $(ROOTFS)
 	sudo cp -a $(ROOTFS)/* $(MOUNT_POINT)/
 	sudo umount $(MOUNT_POINT)
 	@echo "==> $(IMAGE) rebuilt."
