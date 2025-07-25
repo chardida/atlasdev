@@ -4,24 +4,55 @@
 #include <stdio.h>
 #include <string.h>
 
+#define SH_SUCCESS 1
+#define SH_EXIT 0
+#define SH_ERROR 1
+
 int sh_cd(char** args);
 int sh_help(char** args);
 int sh_exit(char** args);
+int sh_export(char** args);
 
 char *builtin_str[] = {
     "cd",
     "help",
-    "exit"
+    "exit",
+    "export"
 };
 
 int (*builtin_func[]) (char**) = {
     &sh_cd,
     &sh_help,
-    &sh_exit
+    &sh_exit,
+    &sh_export
 };
 
 int num_builtins(void) {
     return sizeof(builtin_str) / sizeof(char*);
+}
+
+int sh_export(char **args) {
+    if (args[1] == NULL) {
+        fprintf(stderr, "sh: expected argument to \"export\"\n");
+        return SH_ERROR;
+    }
+
+    char *arg = args[1];
+    char *eq = strchr(arg, '=');
+    if (!eq) {
+        fprintf(stderr, "sh: export: invalid syntax, expected VAR=VALUE\n");
+        return SH_ERROR;
+    }
+
+    *eq = '\0';           // now `arg` is "VAR\0VALUE"
+    char *name  = arg;    
+    char *value = eq + 1; // points just past the '\0'
+
+    if (setenv(name, value, 1) != 0) {
+        perror("sh: export");
+        return SH_ERROR;
+    }
+    return SH_SUCCESS;
 }
 
 int sh_cd(char** args) {
@@ -32,7 +63,7 @@ int sh_cd(char** args) {
             perror("sh");
         }
     }
-    return 1;
+    return SH_SUCCESS;
 }
 
 int sh_help(char** args) {
@@ -43,11 +74,11 @@ int sh_help(char** args) {
         printf("  %s\n", builtin_str[i]);
     }
 
-    return 1;
+    return SH_SUCCESS;
 }
 
 int sh_exit(char** args) {
-    return 0;
+    return SH_EXIT;
 }
 
 int launch(char** args) {
@@ -157,7 +188,10 @@ void loop(void) {
     } while (status);
 }
 
-int main(void) {
+int main(int argc, char** argv, char** envp) {
+    extern char** environ;
+    environ = envp;
+
     loop();
 
     return EXIT_SUCCESS;
