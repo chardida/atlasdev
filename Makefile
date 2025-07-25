@@ -1,5 +1,5 @@
-CC       := gcc
-CFLAGS   := -std=c99 -Wall -Wextra -O2 -static -D_POSIX_C_SOURCE=200112L
+CC         := gcc
+CFLAGS     := -std=c99 -Wall -Wextra -O2 -static -D_POSIX_C_SOURCE=200112L
 
 SRC_DIR     := src
 BUILD_DIR   := build
@@ -9,44 +9,46 @@ IMAGE_SIZE  := 64    # size in MB
 MOUNT_POINT := /mnt
 ROOTFS      := rootfs
 
-ROOTFS_BIN  := $(MOUNT_POINT)/bin
-ROOTFS_SBIN := $(MOUNT_POINT)/sbin
-
-SRCS := $(wildcard $(SRC_DIR)/*.c)
-BINS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%,$(SRCS))
+# Find all .c sources under src/, get relative paths
+SRCS      := $(shell find $(SRC_DIR) -type f -name '*.c')
+REL_PATHS := $(patsubst $(SRC_DIR)/%,%,$(SRCS))
+BINS      := $(patsubst %.c,$(BUILD_DIR)/%,$(REL_PATHS))
 
 .PHONY: all img move run clean
 
 all: $(BINS)
 
-# 1) Compile each source file into a statically-linked binary
+# Compile each source into build/<relative path>, making dirs as needed
 $(BUILD_DIR)/%: $(SRC_DIR)/%.c
-	@mkdir -p $(BUILD_DIR)
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -o $@ $<
 
-# 2) Create or recreate the disk image from scratch
+# Recreate the full disk image and install entire rootfs/
 img:
-	@echo "==> Rebuilding $(IMAGE) ($(IMAGE_SIZE)MB)..."
+	@echo "==> Rebuilding $(IMAGE) ($(IMAGE_SIZE)MB))"
 	@dd if=/dev/zero of=$(IMAGE) bs=1M count=$(IMAGE_SIZE) status=none
 	@mkfs.ext4 -F $(IMAGE)
-	@echo "==> Installing full rootfs into $(IMAGE)..."
+	@echo "==> Installing full rootfs into $(IMAGE)"
 	sudo mount -o loop $(IMAGE) $(MOUNT_POINT)
 	sudo cp -a $(ROOTFS)/* $(MOUNT_POINT)/
 	sudo umount $(MOUNT_POINT)
 	@echo "==> $(IMAGE) rebuilt."
 
-# 3) Install just the updated binaries into the existing image
+# Mount, copy all freshly-built binaries to their matching paths, then unmount
 move: all
-	@echo "==> Mounting $(IMAGE)..."
+	@echo "==> Mounting $(IMAGE)"
 	sudo mount -o loop $(IMAGE) $(MOUNT_POINT)
-	@echo "==> Copying updated tools..."
-	sudo cp $(BUILD_DIR)/init      $(ROOTFS_SBIN)/init
-	sudo cp $(BUILD_DIR)/sh        $(ROOTFS_BIN)/sh
-	sudo cp $(BUILD_DIR)/poweroff  $(ROOTFS_BIN)/poweroff
+	@echo "==> Copying updated tools"
+	@for bin in $(BINS); do \
+	  rel=$${bin#$(BUILD_DIR)/}; \
+	  dir=$$(dirname "$$rel"); \
+	  sudo mkdir -p "$(MOUNT_POINT)/$$dir"; \
+	  sudo cp "$$bin" "$(MOUNT_POINT)/$$rel"; \
+	done
 	sudo umount $(MOUNT_POINT)
 	@echo "==> Binaries updated."
 
-# 4) Build, install (move), and launch the VM
+# Build, install (via move), then boot the VM
 run: move
 	qemu-system-x86_64 \
 		-kernel kernel/bzImage \
@@ -54,6 +56,6 @@ run: move
 		-drive file=$(IMAGE),if=virtio,format=raw \
 		-nographic
 
-# 5) Cleanup build artifacts
+# Remove build artifacts
 clean:
 	rm -rf $(BUILD_DIR)
