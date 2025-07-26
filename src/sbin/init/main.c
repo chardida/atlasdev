@@ -7,6 +7,7 @@ char* default_env[] = {
     "PATH=/bin:/usr/bin",
     "HOME=/",
     "TERM=linux",
+    "CWD=/",
     NULL
 };
 
