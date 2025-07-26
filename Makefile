@@ -9,45 +9,46 @@ IMAGE_SIZE  := 64    # size in MB
 MOUNT_POINT := mnt
 ROOTFS      := $(BUILD_DIR)
 
-# Find all .c sources under src/, get relative paths
-SRCS      := $(shell find $(SRC_DIR) -type f -name '*.c')
-REL_PATHS := $(patsubst $(SRC_DIR)/%,%,$(SRCS))
-BINS      := $(patsubst %.c,$(BUILD_DIR)/%,$(REL_PATHS))
+# Find all main.c sources under src/, get relative paths
+MAINS      := $(shell find $(SRC_DIR) -type f -name 'main.c')
+MAIN_REL_PATHS := $(patsubst $(SRC_DIR)/%,%,$(dir $(MAINS)))
+MAIN_BINS  := $(patsubst %/,$(BUILD_DIR)/%,$(MAIN_REL_PATHS))
 
 .PHONY: all img move run clean
 
-all: clean img
+all: img
 
-# Compile each source into build/<relative path>, making dirs as needed
-$(BUILD_DIR)/%: $(SRC_DIR)/%.c
+# Compile each main.c into build/<relative path without trailing slash>, making dirs as needed
+$(BUILD_DIR)/%: $(SRC_DIR)/%/main.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -o $@ $<
 
 # Recreate the full disk image and install entire rootfs/
-img: $(BINS)
+img: $(MAIN_BINS)
 	@echo "==> Rebuilding $(IMAGE) ($(IMAGE_SIZE)MB))"
 	@dd if=/dev/zero of=$(IMAGE) bs=1M count=$(IMAGE_SIZE) status=none
 	@mkfs.ext4 -F $(IMAGE)
 	@echo "==> Installing full rootfs into $(IMAGE)"
-	sudo mount -o loop $(IMAGE) $(MOUNT_POINT)
 	@mkdir -p $(MOUNT_POINT) $(ROOTFS)
+	@find $(ROOTFS) -type f -exec chmod +x {} \;
+	sudo mount -o loop $(IMAGE) $(MOUNT_POINT)
 	sudo cp -a $(ROOTFS)/* $(MOUNT_POINT)/
 	sudo umount $(MOUNT_POINT)
 	@echo "==> $(IMAGE) rebuilt."
 
-# Mount, copy all freshly-built binaries to their matching paths, then unmount
+# Mount, copy all freshly-built main binaries to their matching paths, then unmount
 move: all
 	@echo "==> Mounting $(IMAGE)"
 	sudo mount -o loop $(IMAGE) $(MOUNT_POINT)
-	@echo "==> Copying updated tools"
-	@for bin in $(BINS); do \
+	@echo "==> Copying updated main binaries"
+	@for bin in $(MAIN_BINS); do \
 	  rel=$${bin#$(BUILD_DIR)/}; \
 	  dir=$$(dirname "$$rel"); \
 	  sudo mkdir -p "$(MOUNT_POINT)/$$dir"; \
 	  sudo cp "$$bin" "$(MOUNT_POINT)/$$rel"; \
 	done
 	sudo umount $(MOUNT_POINT)
-	@echo "==> Binaries updated."
+	@echo "==> Main binaries updated."
 
 # Build, install (via move), then boot the VM
 run: move
