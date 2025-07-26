@@ -25,7 +25,7 @@ $(BUILD_DIR)/%: $(SRC_DIR)/%/main.c
 
 # Recreate the full disk image and install entire rootfs/
 img: $(MAIN_BINS)
-	@echo "==> Rebuilding $(IMAGE) ($(IMAGE_SIZE)MB))"
+	@echo "==> Rebuilding $(IMAGE) ($(IMAGE_SIZE)MB)"
 	@dd if=/dev/zero of=$(IMAGE) bs=1M count=$(IMAGE_SIZE) status=none
 	@mkfs.ext4 -F $(IMAGE)
 	@echo "==> Installing full rootfs into $(IMAGE)"

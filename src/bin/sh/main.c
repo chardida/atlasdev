@@ -205,7 +205,7 @@ void loop(void) {
     int status;
 
     do {
-        printf("$ ");
+        printf("[%s@%s] ", getenv("USER"), getenv("HOSTNAME"));
         line = readLine();
         args = splitLine(line);
         status = execute(args);
