@@ -1,5 +1,5 @@
 CC         := gcc
-CFLAGS     := -std=c99 -Wall -Wextra -O2 -static -D_POSIX_C_SOURCE=200112L
+CFLAGS     := -std=c99 -Wall -Werror -Wextra -O2 -static -D_POSIX_C_SOURCE=200112L
 
 SRC_DIR     := src
 BUILD_DIR   := build
