@@ -13,10 +13,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: configure
-      run: ./configure
     - name: preresquites
-      run: apt-get gcc dd
+      run: sudo apt-get install gcc dd
     - name: make
       run: make
     - name: make check
