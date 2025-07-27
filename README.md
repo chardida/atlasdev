@@ -2,7 +2,7 @@
 
 ## Build System
 
-This project uses a custom Makefile-based build system to compile and package userland binaries for a Linux-based OS image.
+This project uses a GitHub Actions to execute the Makefile automatically, and on the cloud for compatability on any system.
 
 ### How it works
 - Recursively searches `src/` for all `main.c` files.
