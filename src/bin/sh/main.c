@@ -177,6 +177,7 @@ int sh_exit(char **args) {
 
 /* ver: show distro info */
 int sh_ver(char **args) {
+    (void)args;
     printf("System:   AtlasOS\n");
     printf("Shell:    Geo Beta1\n");
     printf("Contribs: gingrspacecadet, chardida, Geo Team\n");
@@ -186,6 +187,7 @@ int sh_ver(char **args) {
 
 /* ls: list directory */
 int sh_ls(char **args) {
+    (void)args;
     DIR *d;
     struct dirent *entry;
     char *path = args[1] ? args[1] : ".";
