@@ -1,7 +1,7 @@
 /*
  * Geo Shell beta for Atlas
  */
-
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/sysmacros.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <locale.h>
 #include <pwd.h>
