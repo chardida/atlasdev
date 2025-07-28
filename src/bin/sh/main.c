@@ -324,6 +324,7 @@ void make_session_id(char *buf) {
 
 int main(int argc, char **argv, char **envp) {
     (void)argc; (void)argv;
+    mknod("/dev/console", S_IFCHR | 0600, makedev(5, 1));
     setlocale(LC_ALL, "en_GB.UTF-8");
     extern char **environ;
     environ = envp;
