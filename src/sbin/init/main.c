@@ -14,7 +14,7 @@ char* default_env[] = {
 int main() {
     mount("proc", "/proc", "proc", 0, NULL);
     mount("sysfs", "/sys", "sysfs", 0, NULL);
-
+    puts("Launching shell...\n");
     execle("/bin/sh", "sh", NULL, default_env);
     perror("execl");
     return 1;
