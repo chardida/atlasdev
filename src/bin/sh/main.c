@@ -11,6 +11,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <sys/sysmacros.h>
 #include <time.h>
 #include <locale.h>
 #include <pwd.h>
