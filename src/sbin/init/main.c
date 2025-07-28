@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <unistd.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
