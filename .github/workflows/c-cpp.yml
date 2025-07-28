@@ -16,7 +16,7 @@ jobs:
     - name: preresquites
       run: sudo apt-get install gcc coreutils
     - name: make
-      run: make
+      run: make img
     - name: Upload image
       uses: actions/upload-artifact@v4
       with:
